@@ -25,8 +25,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     await logout();
-    // Let the useAuth hook handle the redirection after reload.
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   return (
