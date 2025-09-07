@@ -1,10 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import type { User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+
+// This is a simplified user object. You can expand it based on your API response.
+interface User {
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -12,23 +16,49 @@ export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-      
-      const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const checkAuth = useCallback(() => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('userToken');
+      const storedUser = localStorage.getItem('user');
 
+      if (token && storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      // Handle potential JSON parsing errors
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+    
+    // Listen for storage changes to sync auth state across tabs
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [checkAuth]);
+  
+  useEffect(() => {
+    if (!loading) {
+      const isAuthPage = pathname === '/login' || pathname === '/signup';
       if (!user && !isAuthPage) {
         router.push('/login');
       }
       if (user && isAuthPage) {
         router.push('/');
       }
-    });
-
-    return () => unsubscribe();
-  }, [router, pathname]);
+    }
+  }, [user, loading, pathname, router]);
 
   return { user, loading };
 }
