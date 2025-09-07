@@ -1,40 +1,33 @@
 'use server';
 
 import { z } from 'genkit';
-import { GoogleGenAI } from '@google/genai';
+import { ai } from '@/ai/genkit';
 
 const GenerateAIInsightsInputSchema = z.object({
   performanceTrends: z.string(),
   usageStatistics: z.string(),
 });
-export type GenerateAIInsightsInput = z.infer<typeof GenerateAIInsightsInputSchema>;
 
 const GenerateAIInsightsOutputSchema = z.object({
   insights: z.string(),
 });
-export type GenerateAIInsightsOutput = z.infer<typeof GenerateAIInsightsOutputSchema>;
 
-export async function generateAIInsights(
-  input: GenerateAIInsightsInput
-): Promise<GenerateAIInsightsOutput> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('❌ GEMINI_API_KEY is missing in .env');
+const insightsPrompt = ai.definePrompt({
+  name: 'insightsPrompt',
+  input: { schema: GenerateAIInsightsInputSchema },
+  output: { schema: GenerateAIInsightsOutputSchema },
+  prompt: `You are an AI insights generator. Analyze the provided AI performance trends and usage statistics to identify patterns of interest and notable outliers.
 
-  const ai = new GoogleGenAI({ apiKey });
+AI Performance Trends: {{{performanceTrends}}}
+AI Usage Statistics: {{{usageStatistics}}}
 
-  const prompt = `
-You are an AI insights generator. Analyze the provided AI performance trends and usage statistics to identify patterns of interest and notable outliers.
+Generate a concise summary of key insights.`,
+});
 
-AI Performance Trends: ${input.performanceTrends}
-AI Usage Statistics: ${input.usageStatistics}
-
-Generate a concise summary of key insights.
-`;
-
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: prompt,
-  });
-
-  return { insights: response.text || '⚠️ No insights generated' };
+export async function generateAIInsights(input: {
+  performanceTrends: string;
+  usageStatistics: string;
+}): Promise<{ insights: string }> {
+  const { output } = await insightsPrompt(input);
+  return output!;
 }
