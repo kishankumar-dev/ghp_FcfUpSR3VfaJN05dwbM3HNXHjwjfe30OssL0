@@ -1,3 +1,5 @@
+'use client';
+
 import { Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +14,20 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useAuth } from '@/hooks/use-auth';
+import { logout } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Header() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <div className="md:hidden">
@@ -40,26 +54,49 @@ export default function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-9 w-9 rounded-full">
             <Avatar className="h-9 w-9">
-              <AvatarImage src="https://picsum.photos/40" alt="@shadcn" data-ai-hint="person face"/>
-              <AvatarFallback>NG</AvatarFallback>
+              <AvatarImage
+                src={user?.photoURL ?? 'https://picsum.photos/40'}
+                alt={user?.displayName ?? 'User'}
+                data-ai-hint="person face"
+              />
+              <AvatarFallback>
+                {user?.email?.[0].toUpperCase() ?? 'U'}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">NewGen User</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                user@newgen.ai
-              </p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Billing</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Log out</DropdownMenuItem>
+          {user ? (
+            <>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user.displayName || 'NewGen User'}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/account">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>Billing</DropdownMenuItem>
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/login">Log In</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/signup">Sign Up</Link>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
