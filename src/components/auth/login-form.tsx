@@ -45,9 +45,8 @@ export function LoginForm() {
         title: 'Success',
         description: 'Logged in successfully.',
       });
-      // Force a reload to ensure useAuth hook picks up new user from localStorage
-      router.push('/');
-      router.refresh();
+      // Allow the useAuth hook to handle redirection after reload.
+      window.location.href = '/';
 
     } catch (error: any) {
       toast({
