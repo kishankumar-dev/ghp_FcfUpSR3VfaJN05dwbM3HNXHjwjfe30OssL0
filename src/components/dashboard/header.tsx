@@ -56,7 +56,7 @@ export default function Header() {
             <Avatar className="h-9 w-9">
               <AvatarImage
                 src={user?.photoURL ?? 'https://picsum.photos/40'}
-                alt={user?.displayName ?? 'User'}
+                alt={user?.username ?? 'User'}
                 data-ai-hint="person face"
               />
               <AvatarFallback>
@@ -71,7 +71,7 @@ export default function Header() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user.displayName || 'NewGen User'}
+                    {user.username || 'NewGen User'}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}

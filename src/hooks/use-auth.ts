@@ -3,10 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-// This is a simplified user object. You can expand it based on your API response.
 interface User {
   email: string;
-  displayName?: string;
+  username: string;
   photoURL?: string;
 }
 
@@ -28,7 +27,6 @@ export function useAuth() {
         setUser(null);
       }
     } catch (error) {
-      // Handle potential JSON parsing errors
       setUser(null);
     } finally {
       setLoading(false);
@@ -38,7 +36,6 @@ export function useAuth() {
   useEffect(() => {
     checkAuth();
     
-    // Listen for storage changes to sync auth state across tabs
     const handleStorageChange = () => {
       checkAuth();
     };
