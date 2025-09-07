@@ -2,7 +2,7 @@
 
 const API_URL = "https://backend-account.vercel.app";
 
-export async function signup(username, email, password) {
+export async function signup(username: string, email: string, password: string) {
   const response = await fetch(`${API_URL}/signup`, {
     method: 'POST',
     headers: {
@@ -19,7 +19,7 @@ export async function signup(username, email, password) {
   return response.json();
 }
 
-export async function login(email, password) {
+export async function login(email: string, password: string) {
   const response = await fetch(`${API_URL}/login`, {
     method: 'POST',
     headers: {
@@ -38,7 +38,9 @@ export async function login(email, password) {
     // In a real app, you'd store the token securely.
     // For this prototype, we'll use localStorage.
     localStorage.setItem('userToken', data.token);
-    localStorage.setItem('user', JSON.stringify({ email }));
+    // The API should return the user object on successful login.
+    // We'll assume it returns at least email and username.
+    localStorage.setItem('user', JSON.stringify({ email: data.email, username: data.username }));
   }
   return data;
 }

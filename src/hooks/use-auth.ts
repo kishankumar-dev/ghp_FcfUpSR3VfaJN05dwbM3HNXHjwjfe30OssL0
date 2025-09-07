@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 // This is a simplified user object. You can expand it based on your API response.
 interface User {
   email: string;
-  displayName?: string;
+  username?: string;
   photoURL?: string;
 }
 
