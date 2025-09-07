@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/use-auth';
 interface Message {
   role: 'user' | 'model';
   content: string;
+  image?: string; // ✅ added support for image
 }
 
 export default function ChatPage() {
@@ -45,13 +46,18 @@ export default function ChatPage() {
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await chat(messages, currentInput);
-      const aiMessage: Message = { role: 'model', content: response.reply };
+      const response = await chat(messages, input);
+
+      const aiMessage: Message = { 
+        role: 'model', 
+        content: response.reply,
+        image: response.image // ✅ store AI image if available
+      };
+
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -60,7 +66,6 @@ export default function ChatPage() {
         title: 'Error',
         description: 'Failed to get a response from the AI. Please try again.',
       });
-      // remove the user message if the API call fails
       setMessages((prev) => prev.slice(0, prev.length - 1));
     } finally {
       setIsLoading(false);
@@ -116,11 +121,23 @@ export default function ChatPage() {
                             : 'bg-muted'
                         )}
                       >
-                        <ReactMarkdown
-                          className="prose dark:prose-invert prose-p:leading-relaxed prose-p:m-0 prose-headings:m-0 prose-ul:m-0 prose-ol:m-0 prose-li:m-0 prose-img:rounded-md prose-img:border"
-                        >
-                          {message.content}
-                        </ReactMarkdown>
+                        {/* ✅ Text content */}
+                        {message.content && (
+                          <ReactMarkdown
+                            className="prose dark:prose-invert prose-p:leading-relaxed prose-p:m-0 prose-headings:m-0 prose-ul:m-0 prose-ol:m-0 prose-li:m-0"
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        )}
+
+                        {/* ✅ AI Image */}
+                        {message.image && (
+                          <img
+                            src={message.image}
+                            alt="AI generated"
+                            className="generated-img max-w-[400px] mt-2 rounded-lg border"
+                          />
+                        )}
                       </div>
                       {message.role === 'user' && (
                         <Avatar className="h-9 w-9 border">
