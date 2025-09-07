@@ -16,21 +16,15 @@ export function useAuth() {
   const pathname = usePathname();
 
   const checkAuth = useCallback(() => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('userToken');
-      const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('userToken');
+    const storedUser = localStorage.getItem('user');
 
-      if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
+    if (token && storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else {
       setUser(null);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
