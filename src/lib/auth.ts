@@ -38,9 +38,8 @@ export async function login(email: string, password: string) {
     // In a real app, you'd store the token securely.
     // For this prototype, we'll use localStorage.
     localStorage.setItem('userToken', data.token);
-    // The API should return the user object on successful login.
-    // We'll assume it returns at least email and username.
-    localStorage.setItem('user', JSON.stringify({ email: data.email, username: data.username }));
+    // Store the whole user object from the response
+    localStorage.setItem('user', JSON.stringify(data.user));
   }
   return data;
 }

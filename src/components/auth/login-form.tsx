@@ -40,15 +40,12 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const data = await login(values.email, values.password);
-      // Manually setting user in localStorage as the API response shape is known.
-      localStorage.setItem('user', JSON.stringify({ email: data.email, username: data.username }));
-      
+      await login(values.email, values.password);  
       toast({
         title: 'Success',
         description: 'Logged in successfully.',
       });
-      // Force a reload to ensure useAuth hook picks up the new localStorage value
+      // Force a reload to ensure useAuth hook picks up new user from localStorage
       router.push('/');
       router.refresh();
 
