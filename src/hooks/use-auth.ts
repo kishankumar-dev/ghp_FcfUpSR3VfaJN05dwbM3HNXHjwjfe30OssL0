@@ -9,6 +9,8 @@ interface User {
   photoURL?: string;
 }
 
+const PROTECTED_ROUTES = ['/chat', '/account'];
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,14 @@ export function useAuth() {
     const storedUser = localStorage.getItem('user');
 
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        setUser(null);
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('user');
+      }
     } else {
       setUser(null);
     }
@@ -30,8 +39,10 @@ export function useAuth() {
   useEffect(() => {
     checkAuth();
     
-    const handleStorageChange = () => {
-      checkAuth();
+    const handleStorageChange = (event: StorageEvent) => {
+       if (event.key === 'userToken' || event.key === 'user') {
+        checkAuth();
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
@@ -42,11 +53,18 @@ export function useAuth() {
   useEffect(() => {
     if (!loading) {
       const isAuthPage = pathname === '/login' || pathname === '/signup';
-      if (!user && !isAuthPage) {
-        router.push('/login');
-      }
-      if (user && isAuthPage) {
-        router.push('/');
+      
+      // If user is on an auth page
+      if (isAuthPage) {
+        if (user) {
+          router.push('/');
+        }
+      } 
+      // If user is on a protected route
+      else if (PROTECTED_ROUTES.includes(pathname)) {
+        if (!user) {
+          router.push('/login');
+        }
       }
     }
   }, [user, loading, pathname, router]);
