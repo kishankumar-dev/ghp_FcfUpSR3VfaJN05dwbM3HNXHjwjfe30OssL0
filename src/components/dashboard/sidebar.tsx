@@ -14,6 +14,7 @@ import {
   Bot,
   Settings,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { usePathname } from 'next/navigation';
@@ -23,6 +24,7 @@ export default function AppSidebar() {
 
   const menuItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/chat', label: 'AI Chat', icon: MessageSquare },
     { href: '#', label: 'Analytics', icon: BarChart3 },
     { href: '#', label: 'Models', icon: Bot },
     { href: '#', label: 'Settings', icon: Settings },
