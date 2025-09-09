@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, Tooltip } from 'recharts';
 import {
   ChartContainer,
@@ -14,6 +15,16 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function UsageChart({ data }: { data: any[] }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // Or a loading skeleton
+  }
+
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <BarChart accessibilityLayer data={data}>

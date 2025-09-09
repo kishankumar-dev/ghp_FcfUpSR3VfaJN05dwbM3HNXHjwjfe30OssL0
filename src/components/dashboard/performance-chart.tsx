@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Line,
   LineChart,
@@ -26,6 +27,16 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function PerformanceChart({ data }: { data: any[] }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // Or a loading skeleton
+  }
+
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <LineChart
