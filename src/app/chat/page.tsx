@@ -62,30 +62,30 @@ export default function ChatPage() {
 
   const handleSendMessage = async () => {
     if (input.trim() === '' || isLoading) return;
-
+  
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
-
+  
     const currentInput = input;
     setInput('');
     setIsLoading(true);
-
+  
     try {
       // 1. Get AI response
       const { reply, image } = await chat(newMessages, currentInput);
       const aiMessage: Message = { role: 'model', content: reply, image };
-
+  
       // 2. Save user message to backend
       await saveChatMessage(userMessage);
-
+  
       // 3. Save AI message to backend
       await saveChatMessage(aiMessage);
       
       // 4. Update UI with the new history from backend
       const updatedHistory = await getChatHistory();
       setMessages(updatedHistory);
-
+  
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast({

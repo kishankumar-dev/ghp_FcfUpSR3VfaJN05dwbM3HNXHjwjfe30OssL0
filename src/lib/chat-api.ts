@@ -26,8 +26,9 @@ export async function getChatHistory(): Promise<Message[]> {
       throw new Error(`Failed to fetch chat history: ${response.statusText}`);
     }
 
-    const history = await response.json();
-    return Array.isArray(history) ? history : [];
+    // The backend returns { messages: [...] }
+    const data = await response.json();
+    return Array.isArray(data.messages) ? data.messages.map((m: any) => ({...m, role: m.role === 'ai' ? 'model' : 'user'})) : [];
   } catch (error) {
     console.error('Error fetching chat history:', error);
     return [];
@@ -49,7 +50,7 @@ export async function saveChatMessage(message: Message, clear: boolean = false):
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message, clear }),
+    body: JSON.stringify({ ...message, clear }),
   });
 
   if (!response.ok) {
