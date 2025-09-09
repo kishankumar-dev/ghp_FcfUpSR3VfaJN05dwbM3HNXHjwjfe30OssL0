@@ -43,6 +43,16 @@ export async function saveChatMessage(message: Message, clear: boolean = false):
   if (!token) {
     throw new Error('Not authenticated');
   }
+  
+  // Your backend only accepts role and content.
+  const payload: { role: string; content: string; clear?: boolean } = {
+    role: message.role,
+    content: message.content,
+  };
+
+  if (clear) {
+    payload.clear = true;
+  }
 
   const response = await fetch(`${API_URL}/chat`, {
     method: 'POST',
@@ -50,7 +60,7 @@ export async function saveChatMessage(message: Message, clear: boolean = false):
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ ...message, clear }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
