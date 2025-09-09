@@ -56,6 +56,7 @@ export async function chat(
   } else {
     // ---- CHAT MODE ----
      const { text } = await ai.generate({
+        model: 'googleai/gemini-1.5-flash-latest',
         prompt: `${history.map(m => `${m.role}: ${m.content}`).join('\n')}\nuser: ${message}`,
     });
     return { reply: text || '🤖 No response' };
