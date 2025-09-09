@@ -43,7 +43,7 @@ const ChartContainer = React.forwardRef<
     >["children"];
   }
 >(({ id, className, children, config, ...props }, ref) => {
-  const chartId = `chart-${id || Math.random().toString(36).substring(7)}`;
+  const chartId = `chart-${id || React.useId()}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
