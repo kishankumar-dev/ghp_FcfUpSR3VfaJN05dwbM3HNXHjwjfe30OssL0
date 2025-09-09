@@ -25,8 +25,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/");
-    router.refresh(); 
+    window.location.href = '/';
   };
 
   return (
