@@ -100,13 +100,13 @@ export default function ChatPage() {
   };
 
   const handleClearChat = async () => {
-    try {
-        await saveChatMessage({ role: 'user', content: '' }, true);
-        setMessages([]);
-    } catch(e) {
-        console.error(e);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not clear chat history.'})
-    }
+    // This now only clears the local state.
+    // To implement full history deletion, a backend endpoint is required.
+    setMessages([]);
+    toast({
+        title: 'Chat Cleared',
+        description: 'Your conversation has been cleared from this session.',
+    });
   };
 
   return (

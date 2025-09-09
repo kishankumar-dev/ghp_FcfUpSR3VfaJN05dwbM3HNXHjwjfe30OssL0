@@ -38,22 +38,18 @@ export async function getChatHistory(): Promise<Message[]> {
 /**
  * Saves a chat message to the backend.
  */
-export async function saveChatMessage(message: Message, clear: boolean = false): Promise<void> {
+export async function saveChatMessage(message: Message): Promise<void> {
   const token = getAuthToken();
   if (!token) {
     throw new Error('Not authenticated');
   }
 
   // The backend expects role and content. It doesn't handle an `image` field.
-  // It also expects the AI role to be 'ai', not 'model'.
-  const payload: { role: string; content: string; clear?: boolean } = {
+  const payload = {
     role: message.role === 'model' ? 'ai' : message.role,
     content: message.content,
   };
 
-  if (clear) {
-    payload.clear = true;
-  }
 
   const response = await fetch(`${API_URL}/chat`, {
     method: 'POST',
