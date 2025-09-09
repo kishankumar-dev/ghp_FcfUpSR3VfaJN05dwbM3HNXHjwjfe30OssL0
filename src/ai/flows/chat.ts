@@ -10,12 +10,6 @@ const MessageSchema = z.object({
 });
 export type Message = z.infer<typeof MessageSchema>;
 
-const ChatInputSchema = z.object({
-  history: z.array(MessageSchema),
-  message: z.string(),
-});
-export type ChatInput = z.infer<typeof ChatInputSchema>;
-
 const ChatOutputSchema = z.object({
   reply: z.string(),
   image: z.string().optional(),
@@ -35,7 +29,7 @@ export async function chat(
     const keywords = ['draw', 'generate', 'image', 'picture', 'photo', 'illustration'];
     return keywords.some((word) => text.toLowerCase().includes(word));
   };
-  
+
   const modelHistory = history.map(h => ({
     role: h.role,
     parts: [{ text: h.content }]
@@ -62,7 +56,7 @@ export async function chat(
   } else {
     // ---- CHAT MODE ----
      const { text } = await ai.generate({
-        prompt: `${history.map(m => `${m.role}: ${m.content}`).join('\n')}`,
+        prompt: `${history.map(m => `${m.role}: ${m.content}`).join('\n')}\nuser: ${message}`,
     });
     return { reply: text || '🤖 No response' };
   }

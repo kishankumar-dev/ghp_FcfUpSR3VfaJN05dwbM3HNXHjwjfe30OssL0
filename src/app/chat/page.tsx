@@ -12,8 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Trash2, Bot, User, Loader2 } from 'lucide-react';
-import { chat, type Message } from '@/ai/flows/chat';
-import { getChatHistory, saveChatMessage } from '@/lib/chat-api';
+import { type Message } from '@/ai/flows/chat';
+import { getChatHistory, sendMessage } from '@/lib/chat-api';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -62,34 +62,18 @@ export default function ChatPage() {
 
   const handleSendMessage = async () => {
     if (input.trim() === '' || isLoading) return;
-  
+
     const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    setMessages((prev) => [...prev, userMessage]);
+
     const currentInput = input;
     setInput('');
     setIsLoading(true);
-  
+
     try {
-      // 1. Save the user's message first
-      await saveChatMessage(userMessage);
-  
-      // 2. Call the AI with the full history including the new user message
-      const response = await chat(newMessages, currentInput);
-      
-      const aiMessage: Message = {
-        role: 'model',
-        content: response.reply,
-        image: response.image,
-      };
-  
-      // 3. Save the AI's response
-      await saveChatMessage(aiMessage);
-  
-      // 4. Update the UI with the AI's message
-      setMessages((prev) => [...prev, aiMessage]);
-  
-    } catch (error) {
+      const response = await sendMessage(currentInput);
+      setMessages(response.chat);
+    } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
         variant: 'destructive',

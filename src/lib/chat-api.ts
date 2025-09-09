@@ -27,7 +27,6 @@ export async function getChatHistory(): Promise<Message[]> {
     }
 
     const history = await response.json();
-    // Ensure that the history is always an array
     return Array.isArray(history) ? history : [];
   } catch (error) {
     console.error('Error fetching chat history:', error);
@@ -36,27 +35,27 @@ export async function getChatHistory(): Promise<Message[]> {
 }
 
 /**
- * Saves a chat message to the backend.
+ * Sends a chat message to the backend.
  */
-export async function saveChatMessage(message: Message) {
+export async function sendMessage(message: string): Promise<{ reply: string, image?: string, chat: Message[] }> {
   const token = getAuthToken();
   if (!token) {
     throw new Error('Not authenticated');
   }
-  
-  const response = await fetch(`${API_URL}/chat`, {
+
+  const res = await fetch(`${API_URL}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(message),
+    body: JSON.stringify({ message }),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to save chat message');
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || 'Failed to send chat');
   }
 
-  return response.json();
+  return res.json();
 }
