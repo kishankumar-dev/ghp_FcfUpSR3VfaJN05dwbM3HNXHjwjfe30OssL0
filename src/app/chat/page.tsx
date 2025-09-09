@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Trash2, Bot, User } from 'lucide-react';
-import { chat } from '@/ai/flows/chat';
+import { Send, Trash2, Bot, User, Loader2 } from 'lucide-react';
+import { chat, getChatHistory, saveChatMessage } from '@/ai/flows/chat';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -21,16 +21,47 @@ import { useAuth } from '@/hooks/use-auth';
 interface Message {
   role: 'user' | 'model';
   content: string;
-  image?: string; // ✅ added support for image
+  image?: string;
 }
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      setIsHistoryLoading(true);
+      try {
+        const history = await getChatHistory();
+        // The history from the backend might just be content, map it to the Message interface
+        const formattedHistory = history.map((item: any) => ({
+          role: item.role,
+          content: item.content,
+          // Handle potential image data if your backend saves it
+          image: item.image,
+        }));
+        setMessages(formattedHistory);
+      } catch (error) {
+        console.error('Failed to fetch chat history:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not load your chat history.',
+        });
+      } finally {
+        setIsHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [user, toast]);
+
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -50,13 +81,17 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
+      // Get AI response
       const response = await chat(messages, input);
-
       const aiMessage: Message = { 
         role: 'model', 
         content: response.reply,
-        image: response.image // ✅ store AI image if available
+        image: response.image
       };
+      
+      // Save both messages to backend
+      await saveChatMessage(userMessage);
+      await saveChatMessage(aiMessage);
 
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
@@ -66,6 +101,7 @@ export default function ChatPage() {
         title: 'Error',
         description: 'Failed to get a response from the AI. Please try again.',
       });
+      // Remove the user message if the AI fails
       setMessages((prev) => prev.slice(0, prev.length - 1));
     } finally {
       setIsLoading(false);
@@ -73,6 +109,7 @@ export default function ChatPage() {
   };
 
   const handleClearChat = () => {
+    // This should also clear the chat on the backend in a real implementation
     setMessages([]);
   };
 
@@ -98,60 +135,67 @@ export default function ChatPage() {
               </div>
               <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                 <div className="space-y-6">
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        'flex items-start gap-4',
-                        message.role === 'user' ? 'justify-end' : ''
-                      )}
-                    >
-                      {message.role === 'model' && (
-                        <Avatar className="h-9 w-9 border">
-                          <AvatarFallback>
-                            <Bot className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
+                  {isHistoryLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                     <div className="flex justify-center items-center h-full">
+                        <p className="text-muted-foreground">Start a conversation to see your chat history.</p>
+                     </div>
+                  ) : (
+                    messages.map((message, index) => (
                       <div
+                        key={index}
                         className={cn(
-                          'max-w-[75%] rounded-lg p-3 text-sm',
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                          'flex items-start gap-4',
+                          message.role === 'user' ? 'justify-end' : ''
                         )}
                       >
-                        {/* ✅ Text content */}
-                        {message.content && (
-                          <ReactMarkdown
-                            className="prose dark:prose-invert prose-p:leading-relaxed prose-p:m-0 prose-headings:m-0 prose-ul:m-0 prose-ol:m-0 prose-li:m-0"
-                          >
-                            {message.content}
-                          </ReactMarkdown>
+                        {message.role === 'model' && (
+                          <Avatar className="h-9 w-9 border">
+                            <AvatarFallback>
+                              <Bot className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
                         )}
-
-                        {/* ✅ AI Image */}
-                        {message.image && (
-                          <img
-                            src={message.image}
-                            alt="AI generated"
-                            className="generated-img max-w-[400px] mt-2 rounded-lg border"
-                          />
+                        <div
+                          className={cn(
+                            'max-w-[75%] rounded-lg p-3 text-sm',
+                            message.role === 'user'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          )}
+                        >
+                          {message.content && (
+                            <ReactMarkdown
+                              className="prose dark:prose-invert prose-p:leading-relaxed prose-p:m-0 prose-headings:m-0 prose-ul:m-0 prose-ol:m-0 prose-li:m-0"
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          )}
+                          {message.image && (
+                            <img
+                              src={message.image}
+                              alt="AI generated"
+                              className="generated-img max-w-[400px] mt-2 rounded-lg border"
+                            />
+                          )}
+                        </div>
+                        {message.role === 'user' && (
+                          <Avatar className="h-9 w-9 border">
+                            <AvatarImage
+                              src={user?.photoURL ?? ''}
+                              alt={user?.displayName ?? 'User'}
+                            />
+                            <AvatarFallback>
+                              <User className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
                         )}
                       </div>
-                      {message.role === 'user' && (
-                        <Avatar className="h-9 w-9 border">
-                          <AvatarImage
-                            src={user?.photoURL ?? ''}
-                            alt={user?.displayName ?? 'User'}
-                          />
-                          <AvatarFallback>
-                            <User className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  )}
                   {isLoading && (
                     <div className="flex items-start gap-4">
                       <Avatar className="h-9 w-9 border">
@@ -180,13 +224,14 @@ export default function ChatPage() {
                       }
                     }}
                     rows={1}
+                    disabled={isHistoryLoading}
                   />
                   <Button
                     type="submit"
                     size="icon"
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                     onClick={handleSendMessage}
-                    disabled={isLoading || input.trim() === ''}
+                    disabled={isLoading || input.trim() === '' || isHistoryLoading}
                   >
                     <Send className="h-5 w-5" />
                     <span className="sr-only">Send</span>
