@@ -71,7 +71,9 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const response = await chat(messages, currentInput);
+      // Pass the latest messages to the AI
+      const response = await chat(newMessages.slice(0, -1), currentInput);
+      
       const aiMessage: Message = {
         role: 'model',
         content: response.reply,
