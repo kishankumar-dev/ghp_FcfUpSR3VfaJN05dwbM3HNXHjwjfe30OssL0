@@ -26,7 +26,9 @@ export async function getChatHistory(): Promise<Message[]> {
       throw new Error(`Failed to fetch chat history: ${response.statusText}`);
     }
 
-    return await response.json();
+    const history = await response.json();
+    // Ensure that the history is always an array
+    return Array.isArray(history) ? history : [];
   } catch (error) {
     console.error('Error fetching chat history:', error);
     return [];
