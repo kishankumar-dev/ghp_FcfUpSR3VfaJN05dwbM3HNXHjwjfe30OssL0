@@ -62,29 +62,33 @@ export default function ChatPage() {
 
   const handleSendMessage = async () => {
     if (input.trim() === '' || isLoading) return;
-
+  
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     const currentInput = input;
     setInput('');
     setIsLoading(true);
-
+  
     try {
-      // Pass the latest messages to the AI
-      const response = await chat(newMessages.slice(0, -1), currentInput);
+      // 1. Save the user's message first
+      await saveChatMessage(userMessage);
+  
+      // 2. Call the AI with the full history including the new user message
+      const response = await chat(newMessages, currentInput);
       
       const aiMessage: Message = {
         role: 'model',
         content: response.reply,
         image: response.image,
       };
-
-      // Now save both messages
-      await saveChatMessage(userMessage);
+  
+      // 3. Save the AI's response
       await saveChatMessage(aiMessage);
-
+  
+      // 4. Update the UI with the AI's message
       setMessages((prev) => [...prev, aiMessage]);
+  
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -92,7 +96,7 @@ export default function ChatPage() {
         title: 'Error',
         description: 'Failed to get a response from the AI. Please try again.',
       });
-      // Revert the optimistic UI update
+      // Revert the optimistic UI update if something went wrong
       setMessages((prev) => prev.slice(0, prev.length - 1));
     } finally {
       setIsLoading(false);

@@ -62,7 +62,7 @@ export async function chat(
   } else {
     // ---- CHAT MODE ----
      const { text } = await ai.generate({
-        prompt: `${history.map(m => `${m.role}: ${m.content}`).join('\n')}\nuser: ${message}`,
+        prompt: `${history.map(m => `${m.role}: ${m.content}`).join('\n')}`,
     });
     return { reply: text || '🤖 No response' };
   }
