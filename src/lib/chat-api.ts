@@ -26,8 +26,8 @@ export async function getChatHistory(): Promise<Message[]> {
       throw new Error(`Failed to fetch chat history: ${response.statusText}`);
     }
 
-    // The backend returns { messages: [...] }
     const data = await response.json();
+    // Normalize the 'ai' role from the backend to 'model' for the frontend
     return Array.isArray(data.messages) ? data.messages.map((m: any) => ({...m, role: m.role === 'ai' ? 'model' : 'user'})) : [];
   } catch (error) {
     console.error('Error fetching chat history:', error);
@@ -43,10 +43,11 @@ export async function saveChatMessage(message: Message, clear: boolean = false):
   if (!token) {
     throw new Error('Not authenticated');
   }
-  
-  // Your backend only accepts role and content.
+
+  // The backend expects role and content. It doesn't handle an `image` field.
+  // It also expects the AI role to be 'ai', not 'model'.
   const payload: { role: string; content: string; clear?: boolean } = {
-    role: message.role,
+    role: message.role === 'model' ? 'ai' : message.role,
     content: message.content,
   };
 

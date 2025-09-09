@@ -101,8 +101,7 @@ export default function ChatPage() {
 
   const handleClearChat = async () => {
     try {
-        // This should also clear the chat on the backend in a real implementation
-        await saveChatMessage({ role: 'user', content: 'clear' }, true);
+        await saveChatMessage({ role: 'user', content: '' }, true);
         setMessages([]);
     } catch(e) {
         console.error(e);
