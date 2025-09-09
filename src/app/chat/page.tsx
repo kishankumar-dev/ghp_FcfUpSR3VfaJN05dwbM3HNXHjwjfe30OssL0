@@ -12,17 +12,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Trash2, Bot, User, Loader2 } from 'lucide-react';
-import { chat, getChatHistory, saveChatMessage } from '@/ai/flows/chat';
+import { chat, type Message } from '@/ai/flows/chat';
+import { getChatHistory, saveChatMessage } from '@/lib/chat-api';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
-
-interface Message {
-  role: 'user' | 'model';
-  content: string;
-  image?: string;
-}
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -39,14 +34,7 @@ export default function ChatPage() {
       setIsHistoryLoading(true);
       try {
         const history = await getChatHistory();
-        // The history from the backend might just be content, map it to the Message interface
-        const formattedHistory = history.map((item: any) => ({
-          role: item.role,
-          content: item.content,
-          // Handle potential image data if your backend saves it
-          image: item.image,
-        }));
-        setMessages(formattedHistory);
+        setMessages(history);
       } catch (error) {
         console.error('Failed to fetch chat history:', error);
         toast({
@@ -77,20 +65,23 @@ export default function ChatPage() {
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
+      // Save user message first
+      await saveChatMessage(userMessage);
+
       // Get AI response
-      const response = await chat(messages, input);
+      const response = await chat(messages, currentInput);
       const aiMessage: Message = { 
         role: 'model', 
         content: response.reply,
         image: response.image
       };
       
-      // Save both messages to backend
-      await saveChatMessage(userMessage);
+      // Save AI message
       await saveChatMessage(aiMessage);
 
       setMessages((prev) => [...prev, aiMessage]);
