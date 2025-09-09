@@ -64,24 +64,22 @@ export default function ChatPage() {
     if (input.trim() === '' || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      // Save user message first
-      await saveChatMessage(userMessage);
-
-      // Get AI response
       const response = await chat(messages, currentInput);
-      const aiMessage: Message = { 
-        role: 'model', 
+      const aiMessage: Message = {
+        role: 'model',
         content: response.reply,
-        image: response.image
+        image: response.image,
       };
-      
-      // Save AI message
+
+      // Now save both messages
+      await saveChatMessage(userMessage);
       await saveChatMessage(aiMessage);
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -92,7 +90,7 @@ export default function ChatPage() {
         title: 'Error',
         description: 'Failed to get a response from the AI. Please try again.',
       });
-      // Remove the user message if the AI fails
+      // Revert the optimistic UI update
       setMessages((prev) => prev.slice(0, prev.length - 1));
     } finally {
       setIsLoading(false);
