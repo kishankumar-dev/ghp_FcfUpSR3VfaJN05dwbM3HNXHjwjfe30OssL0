@@ -2,7 +2,6 @@
 
 import { z } from 'genkit';
 import { ai } from '@/ai/genkit';
-import { GoogleAI, generativeai } from '@genkit-ai/googleai';
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -45,9 +44,9 @@ export async function chat(
   if (isImagePrompt(message)) {
     // ---- IMAGE MODE ----
     const { output } = await ai.generate({
-      model: GoogleAI.model('gemini-1.5-flash-latest'),
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: `${history.map(m => `${m.role}: ${m.content}`).join('\n')}\nuser: ${message}`,
-      config: { responseMimeType: generativeai. protos.google.ai.generativelanguage.v1beta.GenerateContentResponse.Candidate.Part.Message.IMAGE },
+      config: { responseMimeType: "image/png" },
     });
     
     let reply = '🖼️ Here’s your image:';
