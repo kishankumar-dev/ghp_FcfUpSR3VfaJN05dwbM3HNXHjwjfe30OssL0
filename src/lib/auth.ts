@@ -1,6 +1,6 @@
 'use client';
 
-const API_URL = "https://backend-account.vercel.app";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://backend-account.vercel.app";
 
 export async function signup(username: string, email: string, password: string) {
   const response = await fetch(`${API_URL}/signup`, {
