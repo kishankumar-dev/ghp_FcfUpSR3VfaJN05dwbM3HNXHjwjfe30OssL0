@@ -12,8 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Trash2, Bot, User, Loader2 } from 'lucide-react';
-import { type Message } from '@/ai/flows/chat';
-import { getChatHistory, sendMessage } from '@/lib/chat-api';
+import { type Message, chat } from '@/ai/flows/chat';
+import { getChatHistory, saveChatMessage } from '@/lib/chat-api';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -64,15 +64,28 @@ export default function ChatPage() {
     if (input.trim() === '' || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
 
     const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await sendMessage(currentInput);
-      setMessages(response.chat);
+      // 1. Get AI response
+      const { reply, image } = await chat(newMessages, currentInput);
+      const aiMessage: Message = { role: 'model', content: reply, image };
+
+      // 2. Save user message to backend
+      await saveChatMessage(userMessage);
+
+      // 3. Save AI message to backend
+      await saveChatMessage(aiMessage);
+      
+      // 4. Update UI with the new history from backend
+      const updatedHistory = await getChatHistory();
+      setMessages(updatedHistory);
+
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
@@ -80,16 +93,21 @@ export default function ChatPage() {
         title: 'Error',
         description: 'Failed to get a response from the AI. Please try again.',
       });
-      // Revert the optimistic UI update if something went wrong
-      setMessages((prev) => prev.slice(0, prev.length - 1));
+       setMessages(messages); // Revert UI
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleClearChat = () => {
-    // This should also clear the chat on the backend in a real implementation
-    setMessages([]);
+  const handleClearChat = async () => {
+    try {
+        // This should also clear the chat on the backend in a real implementation
+        await saveChatMessage({ role: 'user', content: 'clear' }, true);
+        setMessages([]);
+    } catch(e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not clear chat history.'})
+    }
   };
 
   return (
